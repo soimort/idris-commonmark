@@ -25,7 +25,8 @@ mutual
                       (title : String) ->
                       Linkable
 
-  data Content = MkLiteralContent  Literal
+  data Content = NullContent
+               | MkLiteralContent  Literal
                | MkInlineContent   Inline
                | MkLinkableContent Linkable
 
@@ -77,10 +78,11 @@ data HeaderLevel = MkHeaderLevel Int
 
 -- data RefMap --FIXME!
 
-data Attributes = MkListDataAttributes       ListData
+data Attributes = NullAttributes
+                | MkListDataAttributes       ListData
                 | MkFencedCodeDataAttributes FencedCodeData
                 | MkHeaderLevelAttributes    HeaderLevel
-                -- | MkRefMapAttributes         RefMap --FIXME!
+                -- | MkRefMapAttributes      RefMap --FIXME!
 
 mutual
   data Block = NullBlock | MkBlock Block'
