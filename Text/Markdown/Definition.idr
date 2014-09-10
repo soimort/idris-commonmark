@@ -1,7 +1,7 @@
 
 module Text.Markdown.Definition
 
--- Inline
+------------------------------------------------------------- Inline
 
 data Literal = MkLiteral String
 
@@ -25,9 +25,9 @@ mutual
                       (title : String) ->
                       Linkable
 
-  data Content = MkContent Literal
-               | MkContent Inline
-               | MkContent Linkable
+  data Content = MkLiteralContent  Literal
+               | MkInlineContent   Inline
+               | MkLinkableContent Linkable
 
   record Inline' : Type where
          MkInline' : (tag     : InlineTag) ->
@@ -35,7 +35,7 @@ mutual
                      (next    : Inline)    ->
                      Inline'
 
--- Block
+-------------------------------------------------------------- Block
 
 data BlockTag = Document
               | BlockQuote
@@ -77,10 +77,10 @@ data HeaderLevel = MkHeaderLevel Int
 
 -- data RefMap --FIXME!
 
-data Attributes = MkAttributes ListData
-                | MkAttributes FencedCodeData
-                | MkAttributes HeaderLevel
-                -- | MkAttributes RefMap --FIXME!
+data Attributes = MkListDataAttributes       ListData
+                | MkFencedCodeDataAttributes FencedCodeData
+                | MkHeaderLevelAttributes    HeaderLevel
+                -- | MkRefMapAttributes         RefMap --FIXME!
 
 mutual
   data Block = NullBlock | MkBlock Block'
@@ -99,6 +99,6 @@ mutual
                     (next          : Block)      ->
                     Block'
 
--- MarkDoc
+------------------------------------------------------------ MarkDoc
 
 data MarkDoc = MkMarkDoc Block
