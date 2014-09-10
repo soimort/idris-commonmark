@@ -3,7 +3,8 @@ int incorporateMarkdownLine(const char *str, int lineNumber, block **cur);
 char **splitString(const char *str, const char *delimiters);
 block *readMarkdownLines(char **lines);
 block *readMarkdown(char *str);
-void writeAST(block *cur, int indent);
+char *writeHtml(block *cur);
+void printHtml(block *cur);
 
 const char *getInlineTag(inl *i);
 const char *getInlineContent_Literal(inl *i);

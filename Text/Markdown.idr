@@ -4,15 +4,39 @@ module Text.Markdown
 import Text.Markdown.Definition
 import Text.Markdown.Options
 
+
+
+-- void free(void* ptr);
+cFree : Ptr -> IO ()
+cFree ptr = mkForeign (FFun "free" [FPtr] FUnit) ptr
+
+-- void free_blocks(block* e);
+cFreeBlocks : Ptr -> IO ()
+cFreeBlocks ptr = mkForeign (FFun "free_blocks" [FPtr] FUnit) ptr
+
+-- void print_blocks(block* b, int indent);
+cPrintBlocks : Ptr -> Int -> IO ()
+cPrintBlocks ptr indent = mkForeign (FFun "print_blocks" [FPtr, FInt] FUnit) ptr indent
+
+-- void print_inlines(inl* ils, int indent);
+cPrintInlines : Ptr -> Int -> IO ()
+cPrintInlines ptr indent = mkForeign (FFun "print_inlines" [FPtr, FInt] FUnit) ptr indent
+
 -- block *readMarkdown(char *str);
 cReadMarkdown : String -> IO Ptr
 cReadMarkdown str = mkForeign (FFun "readMarkdown" [FString] FPtr) str
 
--- void writeAST(block *cur, int indent);
-cWriteAST : Ptr -> Int -> IO ()
-cWriteAST ptr indent = mkForeign (FFun "writeAST" [FPtr, FInt] FUnit) ptr indent
+-- char *writeHtml(block *cur);
+cWriteHtml : Ptr -> IO String
+cWriteHtml ptr = mkForeign (FFun "writeHtml" [FPtr] FString) ptr
 
--- Inline
+-- void printHtml(block *cur);
+cPrintHtml : Ptr -> IO ()
+cPrintHtml ptr = mkForeign (FFun "printHtml" [FPtr] FUnit) ptr
+
+
+
+------------------------------------------------------------- Inline
 
 -- const char *getInlineTag(inl *i);
 cGetInlineTag : Ptr -> IO String
@@ -42,7 +66,7 @@ cGetInlineContent_Linkable_Title ptr = mkForeign (FFun "getInlineContent_Linkabl
 cGetInlineNext : Ptr -> IO Ptr
 cGetInlineNext ptr = mkForeign (FFun "getInlineNext" [FPtr] FPtr) ptr
 
--- Block
+-------------------------------------------------------------- Block
 
 -- const char *getBlockTag(block *cur);
 cGetBlockTag : Ptr -> IO String

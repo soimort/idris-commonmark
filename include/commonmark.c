@@ -65,9 +65,23 @@ block *readMarkdown(char *str)
     return cur;
 }
 
-void writeAST(block *cur, int indent)
+char *writeHtml(block *cur)
 {
-    print_blocks(cur, indent);
+    bstring html;
+    assert(blocks_to_html(cur, &html, false) == 0); // could not format as HTML
+    char *result = (char *) malloc(sizeof(char) * strlen(html->data));
+    strcpy(result, html->data);
+
+    bdestroy(html);
+    return result;
+}
+
+void printHtml(block *cur)
+{
+    bstring html;
+    assert(blocks_to_html(cur, &html, false) == 0); // could not format as HTML
+    printf("%s", html->data);
+    bdestroy(html);
 }
 
 /* Inline */
