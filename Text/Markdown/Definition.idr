@@ -75,12 +75,12 @@ record FencedCodeData : Type where
 
 data HeaderLevel = MkHeaderLevel Int
 
-data RefMap -- FIXME
+-- data RefMap --FIXME!
 
 data Attributes = MkAttributes ListData
                 | MkAttributes FencedCodeData
                 | MkAttributes HeaderLevel
-                | MkAttributes RefMap
+                -- | MkAttributes RefMap --FIXME!
 
 mutual
   data Block = NullBlock | MkBlock Block'
