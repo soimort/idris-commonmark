@@ -1,7 +1,9 @@
 
 module Text.Markdown.Definition
 
-------------------------------------------------------------- Inline
+
+
+-- Inline ----------------------------------------------------------
 
 data Literal = MkLiteral String
 
@@ -32,11 +34,13 @@ mutual
 
   record Inline' : Type where
          MkInline' : (tag     : InlineTag) ->
-                     (content : Content)   ->
-                     (next    : Inline)    ->
+                     (content : Content  ) ->
+                     (next    : Inline   ) ->
                      Inline'
 
--------------------------------------------------------------- Block
+
+
+-- Block -----------------------------------------------------------
 
 data BlockTag = Document
               | BlockQuote
@@ -58,19 +62,19 @@ data Delimiter = Period
                | Parens
 
 record ListData : Type where
-       MkListData : (listType     : ListType)  ->
-                    (markerOffset : Int)       ->
-                    (padding      : Int)       ->
-                    (start        : Int)       ->
+       MkListData : (listType     : ListType ) ->
+                    (markerOffset : Int      ) ->
+                    (padding      : Int      ) ->
+                    (start        : Int      ) ->
                     (delimiter    : Delimiter) ->
-                    (bulletChar   : Char)      ->
-                    (tight        : Bool)      ->
+                    (bulletChar   : Char     ) ->
+                    (tight        : Bool     ) ->
                     ListData
 
 record FencedCodeData : Type where
-       MkFencedCodeData : (fenceLength : Int)    ->
-                          (fenceOffset : Int)    ->
-                          (fenceChar   : Char)   ->
+       MkFencedCodeData : (fenceLength : Int   ) ->
+                          (fenceOffset : Int   ) ->
+                          (fenceChar   : Char  ) ->
                           (info        : String) ->
                           FencedCodeData
 
@@ -88,19 +92,28 @@ mutual
   data Block = NullBlock | MkBlock Block'
 
   record Block' : Type where
-         MkBlock' : (tag           : BlockTag)   ->
-                    (startLine     : Int)        ->
-                    (startColumn   : Int)        ->
-                    (endLine       : Int)        ->
-                    (open          : Bool)       ->
-                    (lastLineBlank : Bool)       ->
-                    (children      : Block)      ->
-                    (stringContent : String)     ->
-                    (inlineContent : Inline)     ->
+         MkBlock' : (tag           : BlockTag  ) ->
+                    (startLine     : Int       ) ->
+                    (startColumn   : Int       ) ->
+                    (endLine       : Int       ) ->
+                    (open          : Bool      ) ->
+                    (lastLineBlank : Bool      ) ->
+                    (children      : Block     ) ->
+                    (stringContent : String    ) ->
+                    (inlineContent : Inline    ) ->
                     (attributes    : Attributes) ->
-                    (next          : Block)      ->
+                    (next          : Block     ) ->
                     Block'
 
------------------------------------------------------------- MarkDoc
 
-data MarkDoc = MkMarkDoc Block
+
+-- Markdown --------------------------------------------------------
+
+record Meta : Type where
+       MkMeta : (source : String) ->
+                Meta
+
+record Markdown : Type where
+       MkMarkdown : (meta   : Meta      ) ->
+                    (blocks : List Block) ->
+                    Markdown
