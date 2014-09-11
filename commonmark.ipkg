@@ -1,0 +1,4 @@
+package commonmark
+
+sourcedir = src
+modules = Text.Markdown, Text.Markdown.Definition, Text.Markdown.Options
