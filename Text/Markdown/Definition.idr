@@ -117,3 +117,14 @@ record Markdown : Type where
        MkMarkdown : (meta   : Meta      ) ->
                     (blocks : List Block) ->
                     Markdown
+
+
+
+-- Show instance ---------------------------------------------------
+
+instance Show Block where
+         show NullBlock = show "NullBlock"
+         show (MkBlock block') = show "MkBlock" --FIXME!
+
+instance Show Markdown where
+         show (MkMarkdown meta blocks) = show $ source meta
