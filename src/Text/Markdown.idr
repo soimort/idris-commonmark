@@ -4,6 +4,10 @@ module Text.Markdown
 import Text.Markdown.Definition
 import Text.Markdown.Options
 
+%link    C "stmd.o"
+%include C "commonmark.c"
+%flag    C "-std=c99"
+
 
 
 -- Direct foreign function calls -----------------------------------
