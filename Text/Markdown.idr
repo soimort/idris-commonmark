@@ -325,6 +325,7 @@ printAST opts m = do
                   let s = source (meta m)
                   cur <- cReadMarkdown s
                   cPrintBlocks cur 0
+                  cFreeBlocks cur
 
 printAST' : Markdown -> IO ()
 printAST' = printAST def
