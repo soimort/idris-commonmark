@@ -307,3 +307,24 @@ writeHtml opts m = unsafePerformIO $
 
 writeHtml' : Markdown -> String
 writeHtml' = writeHtml def
+
+printMarkdown : WriterOptions -> Markdown -> IO ()
+printMarkdown opts m = putStrLn $ writeMarkdown opts m
+
+printMarkdown' : Markdown -> IO ()
+printMarkdown' = printMarkdown def
+
+printHtml : WriterOptions -> Markdown -> IO ()
+printHtml opts m = putStrLn $ writeHtml opts m
+
+printHtml' : Markdown -> IO ()
+printHtml' = printHtml def
+
+printAST : WriterOptions -> Markdown -> IO ()
+printAST opts m = do
+                  let s = source (meta m)
+                  cur <- cReadMarkdown s
+                  cPrintBlocks cur 0
+
+printAST' : Markdown -> IO ()
+printAST' = printAST def
