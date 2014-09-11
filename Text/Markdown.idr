@@ -287,6 +287,15 @@ readMarkdown opts s = unsafePerformIO $
 readMarkdown' : String -> Markdown
 readMarkdown' = readMarkdown def
 
+writeMarkdown : WriterOptions -> Markdown -> String
+writeMarkdown opts m = unsafePerformIO $
+                       do
+                       let s = source (meta m)
+                       return s
+
+writeMarkdown' : Markdown -> String
+writeMarkdown' = writeMarkdown def
+
 writeHtml : WriterOptions -> Markdown -> String
 writeHtml opts m = unsafePerformIO $
                    do
