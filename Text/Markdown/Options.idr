@@ -14,7 +14,7 @@ record ReaderOptions : Type where
 
 instance Default ReaderOptions
          where def = MkReaderOptions
-                        {readerStandalone = True}
+                        {readerStandalone = False}
 
 -- WriterOptions ----------------------------------------------------
 
@@ -24,4 +24,4 @@ record WriterOptions : Type where
 
 instance Default WriterOptions
          where def = MkWriterOptions
-                        {writerStandalone = True}
+                        {writerStandalone = False}
