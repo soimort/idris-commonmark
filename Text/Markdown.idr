@@ -270,3 +270,31 @@ cGetBlock cur = if !(nullPtr cur)
                                           !(cGetInline !(cGetBlockInlineContent cur))
                                           !(cGetBlockAttributes cur tag)
                                           !(cGetBlock !(cGetBlockNext cur))
+
+
+
+-- Idris API -------------------------------------------------------
+
+readMarkdown : ReaderOptions -> String -> Markdown
+readMarkdown opts s = unsafePerformIO $
+                      do
+                      cur <- cReadMarkdown s
+                      block <- cGetBlock cur
+                      cFreeBlocks cur
+                      return $ MkMarkdown (MkMeta s)
+                                          [block]
+
+readMarkdown' : String -> Markdown
+readMarkdown' = readMarkdown def
+
+writeHtml : WriterOptions -> Markdown -> String
+writeHtml opts m = unsafePerformIO $
+                   do
+                   let s = source (meta m)
+                   cur <- cReadMarkdown s
+                   html <- cWriteHtml cur
+                   cFreeBlocks cur
+                   return html
+
+writeHtml' : Markdown -> String
+writeHtml' = writeHtml def
