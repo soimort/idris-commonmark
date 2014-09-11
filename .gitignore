@@ -4,3 +4,6 @@
 *.so
 .#*
 _*
+/src/bstrlib.h
+/src/stmd.h
+/src/uthash.h
