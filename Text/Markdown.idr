@@ -6,6 +6,8 @@ import Text.Markdown.Options
 
 
 
+-- Direct foreign function calls -----------------------------------
+
 -- void free(void* ptr);
 cFree : Ptr -> IO ()
 cFree ptr = mkForeign (FFun "free" [FPtr] FUnit) ptr
@@ -36,15 +38,25 @@ cPrintHtml ptr = mkForeign (FFun "printHtml" [FPtr] FUnit) ptr
 
 
 
-------------------------------------------------------------- Inline
+-- High-level binding: struct Inline* => data Inline ---------------
 
 -- const char *getInlineTag(inl *i);
-cGetInlineTag : Ptr -> IO String
-cGetInlineTag ptr = mkForeign (FFun "getInlineTag" [FPtr] FString) ptr
+cGetInlineTag : Ptr -> IO InlineTag
+cGetInlineTag ptr = return $ case !(mkForeign (FFun "getInlineTag" [FPtr] FString) ptr) of
+                                  "str"       => Str
+                                  "softbreak" => SoftBreak
+                                  "linebreak" => LineBreak
+                                  "code"      => Code
+                                  "raw_html"  => RawHtml
+                                  "entity"    => Entity
+                                  "emph"      => Emph
+                                  "strong"    => Strong
+                                  "link"      => Link
+                                  "image"     => Image
 
 -- const char *getInlineContent_Literal(inl *i);
-cGetInlineContent_Literal : Ptr -> IO String
-cGetInlineContent_Literal ptr = mkForeign (FFun "getInlineContent_Literal" [FPtr] FString) ptr
+cGetInlineContent_Literal : Ptr -> IO Literal
+cGetInlineContent_Literal ptr = mkForeign (FFun "getInlineContent_Literal" [FPtr] FString) ptr >>= return . MkLiteral
 
 -- inl *getInlineContent_Inlines(inl *i);
 cGetInlineContent_Inlines : Ptr -> IO Ptr
@@ -66,11 +78,25 @@ cGetInlineContent_Linkable_Title ptr = mkForeign (FFun "getInlineContent_Linkabl
 cGetInlineNext : Ptr -> IO Ptr
 cGetInlineNext ptr = mkForeign (FFun "getInlineNext" [FPtr] FPtr) ptr
 
--------------------------------------------------------------- Block
+
+
+-- High-level binding: struct Block* => data Block -----------------
 
 -- const char *getBlockTag(block *cur);
-cGetBlockTag : Ptr -> IO String
-cGetBlockTag ptr = mkForeign (FFun "getGlockTag" [FPtr] FString) ptr
+cGetBlockTag : Ptr -> IO BlockTag
+cGetBlockTag ptr = return $ case !(mkForeign (FFun "getBlockTag" [FPtr] FString) ptr) of
+                                 "document"      => Document
+                                 "block_quote"   => BlockQuote
+                                 "list"          => GenericList
+                                 "list_item"     => GenericListItem
+                                 "fenced_code"   => FencedCode
+                                 "indented_code" => IndentedCode
+                                 "html_block"    => HtmlBlock
+                                 "paragraph"     => Paragraph
+                                 "atx_header"    => AtxHeader
+                                 "setext_header" => SetExtHeader
+                                 "hrule"         => HRule
+                                 "reference_def" => ReferenceDef
 
 -- int getBlockStartLine(block *cur);
 cGetBlockStartLine : Ptr -> IO Int
@@ -105,8 +131,10 @@ cGetBlockInlineContent : Ptr -> IO Ptr
 cGetBlockInlineContent ptr = mkForeign (FFun "getBlockInlineContent" [FPtr] FPtr) ptr
 
 -- const char *getBlockAttributes_ListData_ListType(block *cur);
-cGetBlockAttributes_ListData_ListType : Ptr -> IO String
-cGetBlockAttributes_ListData_ListType ptr = mkForeign (FFun "getBlockAttributes_ListData_ListType" [FPtr] FString) ptr
+cGetBlockAttributes_ListData_ListType : Ptr -> IO ListType
+cGetBlockAttributes_ListData_ListType ptr = return $ case !(mkForeign (FFun "getBlockAttributes_ListData_ListType" [FPtr] FString) ptr) of
+                                                          "bullet" => Bullet
+                                                          "ordered" => Ordered
 
 -- int getBlockAttributes_ListData_MarkerOffset(block *cur);
 cGetBlockAttributes_ListData_MarkerOffset : Ptr -> IO Int
@@ -121,8 +149,10 @@ cGetBlockAttributes_ListData_Start : Ptr -> IO Int
 cGetBlockAttributes_ListData_Start ptr = mkForeign (FFun "getBlockAttributes_ListData_Start" [FPtr] FInt) ptr
 
 -- const char *getBlockAttributes_ListData_Delimiter(block *cur);
-cGetBlockAttributes_ListData_Delimiter : Ptr -> IO String
-cGetBlockAttributes_ListData_Delimiter ptr = mkForeign (FFun "getBlockAttributes_ListData_Delimiter" [FPtr] FString) ptr
+cGetBlockAttributes_ListData_Delimiter : Ptr -> IO Delimiter
+cGetBlockAttributes_ListData_Delimiter ptr = return $ case !(mkForeign (FFun "getBlockAttributes_ListData_Delimiter" [FPtr] FString) ptr) of
+                                                           "period" => Period
+                                                           "parens" => Parens
 
 -- char getBlockAttributes_ListData_BulletChar(block *cur);
 cGetBlockAttributes_ListData_BulletChar : Ptr -> IO Char
@@ -149,9 +179,94 @@ cGetBlockAttributes_FencedCodeData_Info : Ptr -> IO String
 cGetBlockAttributes_FencedCodeData_Info ptr = mkForeign (FFun "getBlockAttributes_FencedCodeData_Info" [FPtr] FString) ptr
 
 -- int getBlockAttributes_HeaderLevel(block *cur);
-cGetBlockAttributes_HeaderLevel : Ptr -> IO Int
-cGetBlockAttributes_HeaderLevel ptr = mkForeign (FFun "getBlockAttributes_HeaderLevel" [FPtr] FInt) ptr
+cGetBlockAttributes_HeaderLevel : Ptr -> IO HeaderLevel
+cGetBlockAttributes_HeaderLevel ptr = mkForeign (FFun "getBlockAttributes_HeaderLevel" [FPtr] FInt) ptr >>= return . MkHeaderLevel
 
 -- struct Block *getBlockNext(block *cur);
 cGetBlockNext : Ptr -> IO Ptr
 cGetBlockNext ptr = mkForeign (FFun "getBlockNext" [FPtr] FPtr) ptr
+
+
+
+-- High-level binding: cGetInline ----------------------------------
+
+mutual
+  cGetInlineContent_Linkable: Ptr -> IO Linkable
+  cGetInlineContent_Linkable cur = return $ MkLinkable !(cGetInline !(cGetInlineContent_Linkable_Label cur))
+                                                       !(cGetInlineContent_Linkable_Url cur)
+                                                       !(cGetInlineContent_Linkable_Title cur)
+
+  cGetInlineContent : Ptr -> InlineTag -> IO Content
+  cGetInlineContent cur tag = case tag of
+                                   Str       => cGetInlineContent_Literal cur >>= return . MkLiteralContent
+                                   SoftBreak => return NullContent
+                                   LineBreak => return NullContent
+                                   Code      => cGetInlineContent_Literal cur >>= return . MkLiteralContent
+                                   RawHtml   => cGetInlineContent_Literal cur >>= return . MkLiteralContent
+                                   Entity    => cGetInlineContent_Literal cur >>= return . MkLiteralContent
+                                   Emph      => cGetInlineContent_Linkable cur >>= return . MkLinkableContent
+                                   Strong    => cGetInlineContent_Linkable cur >>= return . MkLinkableContent
+                                   Link      => cGetInlineContent_Linkable cur >>= return . MkLinkableContent
+                                   Image     => cGetInlineContent_Linkable cur >>= return . MkLinkableContent
+
+  cGetInline : Ptr -> IO Inline
+  cGetInline cur = if !(nullPtr cur)
+                      then return NullInline
+                      else do
+                           tag <- cGetInlineTag cur
+                           return $ MkInline
+                                  $ MkInline' tag
+                                              !(cGetInlineContent cur tag)
+                                              !(cGetInline !(cGetInlineNext cur))
+
+
+
+-- High-level binding: cGetBlock -----------------------------------
+
+cGetBlockAttributes_ListData : Ptr -> IO ListData
+cGetBlockAttributes_ListData cur = return $ MkListData !(cGetBlockAttributes_ListData_ListType cur)
+                                                       !(cGetBlockAttributes_ListData_MarkerOffset cur)
+                                                       !(cGetBlockAttributes_ListData_Padding cur)
+                                                       !(cGetBlockAttributes_ListData_Start cur)
+                                                       !(cGetBlockAttributes_ListData_Delimiter cur)
+                                                       !(cGetBlockAttributes_ListData_BulletChar cur)
+                                                       !(cGetBlockAttributes_ListData_Tight cur)
+
+cGetBlockAttributes_FencedCodeData : Ptr -> IO FencedCodeData
+cGetBlockAttributes_FencedCodeData cur = return $ MkFencedCodeData !(cGetBlockAttributes_FencedCodeData_FenceLength cur)
+                                                                   !(cGetBlockAttributes_FencedCodeData_FenceOffset cur)
+                                                                   !(cGetBlockAttributes_FencedCodeData_FenceChar cur)
+                                                                   !(cGetBlockAttributes_FencedCodeData_Info cur)
+
+cGetBlockAttributes : Ptr -> BlockTag -> IO Attributes
+cGetBlockAttributes cur tag = case tag of
+                                   Document        => return NullAttributes
+                                   BlockQuote      => return NullAttributes
+                                   GenericList     => cGetBlockAttributes_ListData cur >>= return . MkListDataAttributes
+                                   GenericListItem => cGetBlockAttributes_ListData cur >>= return . MkListDataAttributes
+                                   FencedCode      => cGetBlockAttributes_FencedCodeData cur >>= return . MkFencedCodeDataAttributes
+                                   IndentedCode    => return NullAttributes
+                                   HtmlBlock       => return NullAttributes
+                                   Paragraph       => return NullAttributes
+                                   AtxHeader       => cGetBlockAttributes_HeaderLevel cur >>= return . MkHeaderLevelAttributes
+                                   SetExtHeader    => cGetBlockAttributes_HeaderLevel cur >>= return . MkHeaderLevelAttributes
+                                   HRule           => return NullAttributes
+                                   ReferenceDef    => return NullAttributes --FIXME!
+
+cGetBlock : Ptr -> IO Block
+cGetBlock cur = if !(nullPtr cur)
+                   then return NullBlock
+                   else do
+                        tag <- cGetBlockTag cur
+                        return $ MkBlock
+                               $ MkBlock' tag
+                                          !(cGetBlockStartLine cur)
+                                          !(cGetBlockStartColumn cur)
+                                          !(cGetBlockEndLine cur)
+                                          !(cGetBlockOpen cur)
+                                          !(cGetBlockLastLineBlank cur)
+                                          !(cGetBlock !(cGetBlockChildren cur))
+                                          !(cGetBlockStringContent cur)
+                                          !(cGetInline !(cGetBlockInlineContent cur))
+                                          !(cGetBlockAttributes cur tag)
+                                          !(cGetBlock !(cGetBlockNext cur))
