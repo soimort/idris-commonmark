@@ -7,7 +7,7 @@
 
 #include "commonmark.h"
 
-int incorporateMarkdownLine(const char *str, int lineNumber, block **cur)
+int incorporateMarkdownLine(const char *str, int lineNumber, cmark_block **cur)
 {
     bstring bstr = bfromcstr(str);
     int returnCode = incorporate_line(bstr, lineNumber, cur);
@@ -35,9 +35,9 @@ char **splitString(const char *str, const char *delimiters)
     return result;
 }
 
-block *readMarkdownLines(char **lines)
+cmark_block *readMarkdownLines(char **lines)
 {
-    block *cur = make_document();
+    cmark_block *cur = make_document();
 
     for (int i = 0; lines[i]; i++)
         assert(incorporateMarkdownLine(lines[i], i + 1, &cur) == 0);
@@ -54,10 +54,10 @@ block *readMarkdownLines(char **lines)
     return cur;
 }
 
-block *readMarkdown(char *str)
+cmark_block *readMarkdown(char *str)
 {
     char **lines = splitString(str, "\n");
-    block *cur = readMarkdownLines(lines);
+    cmark_block *cur = readMarkdownLines(lines);
 
     for (int i = 0; lines[i]; i++)
         free(lines[i]);
@@ -65,7 +65,7 @@ block *readMarkdown(char *str)
     return cur;
 }
 
-char *writeHtml(block *cur)
+char *writeHtml(cmark_block *cur)
 {
     bstring html;
     assert(blocks_to_html(cur, &html, false) == 0); // could not format as HTML
@@ -76,7 +76,7 @@ char *writeHtml(block *cur)
     return result;
 }
 
-void printHtml(block *cur)
+void printHtml(cmark_block *cur)
 {
     bstring html;
     assert(blocks_to_html(cur, &html, false) == 0); // could not format as HTML
@@ -86,192 +86,192 @@ void printHtml(block *cur)
 
 /* Inline */
 
-const char *getInlineTag(inl *i) {
+const char *getInlineTag(cmark_inl *i) {
     switch (i->tag) {
-    case str:
+    case cmark_str:
         return "str";
-    case softbreak:
+    case cmark_softbreak:
         return "softbreak";
-    case linebreak:
+    case cmark_linebreak:
         return "linebreak";
-    case code:
+    case cmark_code:
         return "code";
-    case raw_html:
+    case cmark_raw_html:
         return "raw_html";
-    case entity:
+    case cmark_entity:
         return "entity";
-    case emph:
+    case cmark_emph:
         return "emph";
-    case strong:
+    case cmark_strong:
         return "strong";
-    case link:
+    case cmark_link:
         return "link";
-    case image:
+    case cmark_image:
         return "image";
     }
 }
 
-const char *getInlineContent_Literal(inl *i) {
+const char *getInlineContent_Literal(cmark_inl *i) {
     return bstr2cstr(i->content.literal, 0);
 }
 
-inline inl *getInlineContent_Inlines(inl *i) {
+inline cmark_inl *getInlineContent_Inlines(cmark_inl *i) {
     return i->content.inlines;
 }
 
-inline inl *getInlineContent_Linkable_Label(inl *i) {
+inline cmark_inl *getInlineContent_Linkable_Label(cmark_inl *i) {
     return i->content.linkable.label;
 }
 
-const char *getInlineContent_Linkable_Url(inl *i) {
+const char *getInlineContent_Linkable_Url(cmark_inl *i) {
     return bstr2cstr(i->content.linkable.url, 0);
 }
 
-const char *getInlineContent_Linkable_Title(inl *i) {
+const char *getInlineContent_Linkable_Title(cmark_inl *i) {
     return bstr2cstr(i->content.linkable.title, 0);
 }
 
-inline inl *getInlineNext(inl *i) {
+inline cmark_inl *getInlineNext(cmark_inl *i) {
     return i->next;
 }
 
 /* Block */
 
-const char *getBlockTag(block *cur) {
+const char *getBlockTag(cmark_block *cur) {
     switch (cur->tag) {
-    case document:
+    case cmark_document:
         return "document";
         break;
-    case block_quote:
+    case cmark_block_quote:
         return "block_quote";
         break;
-    case list:
+    case cmark_list:
         return "list";
         break;
-    case list_item:
+    case cmark_list_item:
         return "list_item";
         break;
-    case fenced_code:
+    case cmark_fenced_code:
         return "fenced_code";
         break;
-    case indented_code:
+    case cmark_indented_code:
         return "indented_code";
         break;
-    case html_block:
+    case cmark_html_block:
         return "html_block";
         break;
-    case paragraph:
+    case cmark_paragraph:
         return "paragraph";
         break;
-    case atx_header:
+    case cmark_atx_header:
         return "atx_header";
         break;
-    case setext_header:
+    case cmark_setext_header:
         return "setext_header";
         break;
-    case hrule:
+    case cmark_hrule:
         return "hrule";
         break;
-    case reference_def:
+    case cmark_reference_def:
         return "reference_def";
         break;
     }
 }
 
-inline int getBlockStartLine(block *cur) {
+inline int getBlockStartLine(cmark_block *cur) {
     return cur->start_line;
 }
 
-inline int getBlockStartColumn(block *cur) {
+inline int getBlockStartColumn(cmark_block *cur) {
     return cur->start_column;
 }
 
-inline int getBlockEndLine(block *cur) {
+inline int getBlockEndLine(cmark_block *cur) {
     return cur->end_line;
 }
 
-inline bool getBlockOpen(block *cur) {
+inline bool getBlockOpen(cmark_block *cur) {
     return cur->open;
 }
 
-inline bool getBlockLastLineBlank(block *cur) {
+inline bool getBlockLastLineBlank(cmark_block *cur) {
     return cur->last_line_blank;
 }
 
-inline struct Block *getBlockChildren(block *cur) {
+inline struct cmark_Block *getBlockChildren(cmark_block *cur) {
     return cur->children;
 }
 
-const char *getBlockStringContent(block *cur) {
+const char *getBlockStringContent(cmark_block *cur) {
     return bstr2cstr(cur->string_content, 0);
 }
 
-inline inl *getBlockInlineContent(block *cur) {
+inline cmark_inl *getBlockInlineContent(cmark_block *cur) {
     return cur->inline_content;
 }
 
-const char *getBlockAttributes_ListData_ListType(block *cur) {
+const char *getBlockAttributes_ListData_ListType(cmark_block *cur) {
     switch (cur->attributes.list_data.list_type) {
-    case bullet:
+    case cmark_bullet:
         return "bullet";
         break;
-    case ordered:
+    case cmark_ordered:
         return "ordered";
         break;
     }
 }
 
-inline int getBlockAttributes_ListData_MarkerOffset(block *cur) {
+inline int getBlockAttributes_ListData_MarkerOffset(cmark_block *cur) {
     return cur->attributes.list_data.marker_offset;
 }
 
-inline int getBlockAttributes_ListData_Padding(block *cur) {
+inline int getBlockAttributes_ListData_Padding(cmark_block *cur) {
     return cur->attributes.list_data.padding;
 }
 
-inline int getBlockAttributes_ListData_Start(block *cur) {
+inline int getBlockAttributes_ListData_Start(cmark_block *cur) {
     return cur->attributes.list_data.start;
 }
 
-const char *getBlockAttributes_ListData_Delimiter(block *cur) {
+const char *getBlockAttributes_ListData_Delimiter(cmark_block *cur) {
     switch (cur->attributes.list_data.delimiter) {
-    case period:
+    case cmark_period:
         return "period";
         break;
-    case parens:
+    case cmark_parens:
         return "parens";
         break;
     }
 }
 
-inline char getBlockAttributes_ListData_BulletChar(block *cur) {
+inline char getBlockAttributes_ListData_BulletChar(cmark_block *cur) {
     return cur->attributes.list_data.bullet_char;
 }
 
-inline bool getBlockAttributes_ListData_Tight(block *cur) {
+inline bool getBlockAttributes_ListData_Tight(cmark_block *cur) {
     return cur->attributes.list_data.tight;
 }
 
-inline int getBlockAttributes_FencedCodeData_FenceLength(block *cur) {
+inline int getBlockAttributes_FencedCodeData_FenceLength(cmark_block *cur) {
     return cur->attributes.fenced_code_data.fence_length;
 }
 
-inline int getBlockAttributes_FencedCodeData_FenceOffset(block *cur) {
+inline int getBlockAttributes_FencedCodeData_FenceOffset(cmark_block *cur) {
     return cur->attributes.fenced_code_data.fence_offset;
 }
 
-inline char getBlockAttributes_FencedCodeData_FenceChar(block *cur) {
+inline char getBlockAttributes_FencedCodeData_FenceChar(cmark_block *cur) {
     return cur->attributes.fenced_code_data.fence_char;
 }
 
-const char *getBlockAttributes_FencedCodeData_Info(block *cur) {
+const char *getBlockAttributes_FencedCodeData_Info(cmark_block *cur) {
     return bstr2cstr(cur->attributes.fenced_code_data.info, 0);
 }
 
-inline int getBlockAttributes_HeaderLevel(block *cur) {
+inline int getBlockAttributes_HeaderLevel(cmark_block *cur) {
     return cur->attributes.header_level;
 }
 
-inline struct Block *getBlockNext(block *cur) {
+inline struct cmark_Block *getBlockNext(cmark_block *cur) {
     return cur->next;
 }
