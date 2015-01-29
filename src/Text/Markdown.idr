@@ -4,8 +4,9 @@ module Text.Markdown
 import Text.Markdown.Definition
 import Text.Markdown.Options
 
-%link    C "stmd.o"
+%link    C "cmark.o"
 %include C "commonmark.c"
+%include C "scanners.c"
 %flag    C "-std=c99"
 
 
@@ -16,17 +17,13 @@ import Text.Markdown.Options
 cFree : Ptr -> IO ()
 cFree ptr = mkForeign (FFun "free" [FPtr] FUnit) ptr
 
--- void free_blocks(block* e);
-cFreeBlocks : Ptr -> IO ()
-cFreeBlocks ptr = mkForeign (FFun "free_blocks" [FPtr] FUnit) ptr
+-- void cmark_free_nodes(node_block* e);
+cFreeNodes : Ptr -> IO ()
+cFreeNodes ptr = mkForeign (FFun "cmark_free_nodes" [FPtr] FUnit) ptr
 
--- void print_blocks(block* b, int indent);
-cPrintBlocks : Ptr -> Int -> IO ()
-cPrintBlocks ptr indent = mkForeign (FFun "print_blocks" [FPtr, FInt] FUnit) ptr indent
-
--- void print_inlines(inl* ils, int indent);
-cPrintInlines : Ptr -> Int -> IO ()
-cPrintInlines ptr indent = mkForeign (FFun "print_inlines" [FPtr, FInt] FUnit) ptr indent
+-- void cmark_debug_print(block* b, int indent);
+cPrintBlocks : Ptr -> IO ()
+cPrintBlocks ptr = mkForeign (FFun "cmark_debug_print" [FPtr] FUnit) ptr
 
 -- block *readMarkdown(char *str);
 cReadMarkdown : String -> IO Ptr
@@ -284,7 +281,7 @@ readMarkdown opts s = unsafePerformIO $
                       do
                       cur <- cReadMarkdown s
                       block <- cGetBlock cur
-                      cFreeBlocks cur
+                      cFreeNodes cur
                       return $ MkMarkdown (MkMeta s)
                                           [block]
 
@@ -306,7 +303,7 @@ writeHtml opts m = unsafePerformIO $
                    let s = source (meta m)
                    cur <- cReadMarkdown s
                    html <- cWriteHtml cur
-                   cFreeBlocks cur
+                   cFreeNodes cur
                    return html
 
 writeHtml' : Markdown -> String
@@ -328,8 +325,8 @@ printAST : WriterOptions -> Markdown -> IO ()
 printAST opts m = do
                   let s = source (meta m)
                   cur <- cReadMarkdown s
-                  cPrintBlocks cur 0
-                  cFreeBlocks cur
+                  cPrintBlocks cur
+                  cFreeNodes cur
 
 printAST' : Markdown -> IO ()
 printAST' = printAST def

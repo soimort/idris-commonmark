@@ -3,6 +3,5 @@ package commonmark
 sourcedir = src
 modules = Text.Markdown, Text.Markdown.Definition, Text.Markdown.Options
 
-makefile = stmd.mk
-objs = bstrlib.h, stmd.h, uthash.h, stmd.o, libstmd.so,
-       commonmark.h, commonmark.c
+makefile = cmark.mk
+objs = cmark.h, buffer.h, chunk.h, references.h, scanners.c, cmark.o, commonmark.h, commonmark.c
