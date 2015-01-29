@@ -139,7 +139,7 @@ inline bool getBlockLastLineBlank(node_block *cur) {
     return cur->last_line_blank;
 }
 
-inline struct node_Block *getBlockChildren(node_block *cur) {
+inline node_block *getBlockChildren(node_block *cur) {
     return cur->children;
 }
 
@@ -213,6 +213,6 @@ inline int getBlockAttributes_HeaderLevel(node_block *cur) {
     return cur->as.header.level;
 }
 
-inline struct node_Block *getBlockNext(node_block *cur) {
+inline node_block *getBlockNext(node_block *cur) {
     return cur->next;
 }
