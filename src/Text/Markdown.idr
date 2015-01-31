@@ -7,7 +7,6 @@ import Text.Markdown.Options
 %link    C "cmark.o"
 %include C "commonmark.c"
 %include C "scanners.c"
-%flag    C "-std=c99"
 
 
 
