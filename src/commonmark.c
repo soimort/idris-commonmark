@@ -15,6 +15,7 @@ inline node_block *readMarkdown(char *str)
 char *writeHtml(node_block *cur)
 {
     strbuf html;
+    strbuf_init(&html, 0);
     cmark_render_html(&html, cur);
     return strbuf_detach(&html);
 }
@@ -22,6 +23,7 @@ char *writeHtml(node_block *cur)
 void printHtml(node_block *cur)
 {
     strbuf html;
+    strbuf_init(&html, 0);
     cmark_render_html(&html, cur);
     printf("%s", strbuf_cstr(&html));
     strbuf_free(&html);
