@@ -86,12 +86,12 @@ cGetInlineNext ptr = foreign FFI_C "getInlineNext" (Ptr -> IO Ptr) ptr
 cGetBlockTag : Ptr -> IO BlockTag
 cGetBlockTag ptr = return $ case !(foreign FFI_C "getBlockTag" (Ptr -> IO String) ptr) of
                                  "document"      => Document
-                                 "block_quote"   => BlockQuote
+                                 "bquote"        => BlockQuote
                                  "list"          => GenericList
                                  "list_item"     => GenericListItem
                                  "fenced_code"   => FencedCode
                                  "indented_code" => IndentedCode
-                                 "html_block"    => HtmlBlock
+                                 "html"          => HtmlBlock
                                  "paragraph"     => Paragraph
                                  "atx_header"    => AtxHeader
                                  "setext_header" => SetExtHeader
