@@ -4,8 +4,10 @@
 *.so
 .#*
 _*
-/src/bstrlib.h
-/src/stmd.h
-/src/uthash.h
+/src/cmark.h
+/src/buffer.h
+/src/chunk.h
+/src/references.h
+/src/scanners.c
 /Demo
 /Demo.html

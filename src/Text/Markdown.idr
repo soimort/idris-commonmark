@@ -4,9 +4,9 @@ module Text.Markdown
 import Text.Markdown.Definition
 import Text.Markdown.Options
 
-%link    C "stmd.o"
+%link    C "cmark.o"
 %include C "commonmark.c"
-%flag    C "-std=c99"
+%include C "scanners.c"
 
 
 
@@ -14,39 +14,35 @@ import Text.Markdown.Options
 
 -- void free(void* ptr);
 cFree : Ptr -> IO ()
-cFree ptr = mkForeign (FFun "free" [FPtr] FUnit) ptr
+cFree ptr = foreign FFI_C "free" (Ptr -> IO Unit) ptr
 
--- void free_blocks(block* e);
-cFreeBlocks : Ptr -> IO ()
-cFreeBlocks ptr = mkForeign (FFun "free_blocks" [FPtr] FUnit) ptr
+-- void cmark_free_nodes(node_block* e);
+cFreeNodes : Ptr -> IO ()
+cFreeNodes ptr = foreign FFI_C "cmark_free_nodes" (Ptr -> IO Unit) ptr
 
--- void print_blocks(block* b, int indent);
-cPrintBlocks : Ptr -> Int -> IO ()
-cPrintBlocks ptr indent = mkForeign (FFun "print_blocks" [FPtr, FInt] FUnit) ptr indent
+-- void cmark_debug_print(node_block* b, int indent);
+cPrintBlocks : Ptr -> IO ()
+cPrintBlocks ptr = foreign FFI_C "cmark_debug_print" (Ptr -> IO Unit) ptr
 
--- void print_inlines(inl* ils, int indent);
-cPrintInlines : Ptr -> Int -> IO ()
-cPrintInlines ptr indent = mkForeign (FFun "print_inlines" [FPtr, FInt] FUnit) ptr indent
-
--- block *readMarkdown(char *str);
+-- node_block *readMarkdown(char *str);
 cReadMarkdown : String -> IO Ptr
-cReadMarkdown str = mkForeign (FFun "readMarkdown" [FString] FPtr) str
+cReadMarkdown str = foreign FFI_C "readMarkdown" (String -> IO Ptr) str
 
--- char *writeHtml(block *cur);
+-- char *writeHtml(node_block *cur);
 cWriteHtml : Ptr -> IO String
-cWriteHtml ptr = mkForeign (FFun "writeHtml" [FPtr] FString) ptr
+cWriteHtml ptr = foreign FFI_C "writeHtml" (Ptr -> IO String) ptr
 
--- void printHtml(block *cur);
+-- void printHtml(node_block *cur);
 cPrintHtml : Ptr -> IO ()
-cPrintHtml ptr = mkForeign (FFun "printHtml" [FPtr] FUnit) ptr
+cPrintHtml ptr = foreign FFI_C "printHtml" (Ptr -> IO Unit) ptr
 
 
 
 -- High-level binding: struct Inline* => data Inline ---------------
 
--- const char *getInlineTag(inl *i);
+-- const char *getInlineTag(node_inl *i);
 cGetInlineTag : Ptr -> IO InlineTag
-cGetInlineTag ptr = return $ case !(mkForeign (FFun "getInlineTag" [FPtr] FString) ptr) of
+cGetInlineTag ptr = return $ case !(foreign FFI_C "getInlineTag" (Ptr -> IO String) ptr) of
                                   "str"       => Str
                                   "softbreak" => SoftBreak
                                   "linebreak" => LineBreak
@@ -58,137 +54,137 @@ cGetInlineTag ptr = return $ case !(mkForeign (FFun "getInlineTag" [FPtr] FStrin
                                   "link"      => Link
                                   "image"     => Image
 
--- const char *getInlineContent_Literal(inl *i);
+-- const char *getInlineContent_Literal(node_inl *i);
 cGetInlineContent_Literal : Ptr -> IO Literal
-cGetInlineContent_Literal ptr = mkForeign (FFun "getInlineContent_Literal" [FPtr] FString) ptr >>= return . MkLiteral
+cGetInlineContent_Literal ptr = foreign FFI_C "getInlineContent_Literal" (Ptr -> IO String) ptr >>= return . MkLiteral
 
--- inl *getInlineContent_Inlines(inl *i);
+-- node_inl *getInlineContent_Inlines(node_inl *i);
 cGetInlineContent_Inlines : Ptr -> IO Ptr
-cGetInlineContent_Inlines ptr = mkForeign (FFun "getInlineContent_Inlines" [FPtr] FPtr) ptr
+cGetInlineContent_Inlines ptr = foreign FFI_C "getInlineContent_Inlines" (Ptr -> IO Ptr) ptr
 
--- inl *getInlineContent_Linkable_Label(inl *i);
+-- node_inl *getInlineContent_Linkable_Label(node_inl *i);
 cGetInlineContent_Linkable_Label : Ptr -> IO Ptr
-cGetInlineContent_Linkable_Label ptr = mkForeign (FFun "getInlineContent_Linkable_Label" [FPtr] FPtr) ptr
+cGetInlineContent_Linkable_Label ptr = foreign FFI_C "getInlineContent_Linkable_Label" (Ptr -> IO Ptr) ptr
 
--- const char *getInlineContent_Linkable_Url(inl *i);
+-- const char *getInlineContent_Linkable_Url(node_inl *i);
 cGetInlineContent_Linkable_Url : Ptr -> IO String
-cGetInlineContent_Linkable_Url ptr = mkForeign (FFun "getInlineContent_Linkable_Url" [FPtr] FString) ptr
+cGetInlineContent_Linkable_Url ptr = foreign FFI_C "getInlineContent_Linkable_Url" (Ptr -> IO String) ptr
 
 -- const char *getInlineContent_Linkable_Title(inl *i);
 cGetInlineContent_Linkable_Title : Ptr -> IO String
-cGetInlineContent_Linkable_Title ptr = mkForeign (FFun "getInlineContent_Linkable_Title" [FPtr] FString) ptr
+cGetInlineContent_Linkable_Title ptr = foreign FFI_C "getInlineContent_Linkable_Title" (Ptr -> IO String) ptr
 
--- inl *getInlineNext(inl *i);
+-- node_inl *getInlineNext(node_inl *i);
 cGetInlineNext : Ptr -> IO Ptr
-cGetInlineNext ptr = mkForeign (FFun "getInlineNext" [FPtr] FPtr) ptr
+cGetInlineNext ptr = foreign FFI_C "getInlineNext" (Ptr -> IO Ptr) ptr
 
 
 
 -- High-level binding: struct Block* => data Block -----------------
 
--- const char *getBlockTag(block *cur);
+-- const char *getBlockTag(node_block *cur);
 cGetBlockTag : Ptr -> IO BlockTag
-cGetBlockTag ptr = return $ case !(mkForeign (FFun "getBlockTag" [FPtr] FString) ptr) of
+cGetBlockTag ptr = return $ case !(foreign FFI_C "getBlockTag" (Ptr -> IO String) ptr) of
                                  "document"      => Document
-                                 "block_quote"   => BlockQuote
+                                 "bquote"        => BlockQuote
                                  "list"          => GenericList
                                  "list_item"     => GenericListItem
                                  "fenced_code"   => FencedCode
                                  "indented_code" => IndentedCode
-                                 "html_block"    => HtmlBlock
+                                 "html"          => HtmlBlock
                                  "paragraph"     => Paragraph
                                  "atx_header"    => AtxHeader
                                  "setext_header" => SetExtHeader
                                  "hrule"         => HRule
                                  "reference_def" => ReferenceDef
 
--- int getBlockStartLine(block *cur);
+-- int getBlockStartLine(node_block *cur);
 cGetBlockStartLine : Ptr -> IO Int
-cGetBlockStartLine ptr = mkForeign (FFun "getBlockStartLine" [FPtr] FInt) ptr
+cGetBlockStartLine ptr = foreign FFI_C "getBlockStartLine" (Ptr -> IO Int) ptr
 
--- int getBlockStartColumn(block *cur);
+-- int getBlockStartColumn(node_block *cur);
 cGetBlockStartColumn : Ptr -> IO Int
-cGetBlockStartColumn ptr = mkForeign (FFun "getBlockStartColumn" [FPtr] FInt) ptr
+cGetBlockStartColumn ptr = foreign FFI_C "getBlockStartColumn" (Ptr -> IO Int) ptr
 
--- int getBlockEndLine(block *cur);
+-- int getBlockEndLine(node_block *cur);
 cGetBlockEndLine : Ptr -> IO Int
-cGetBlockEndLine ptr = mkForeign (FFun "getBlockEndLine" [FPtr] FInt) ptr
+cGetBlockEndLine ptr = foreign FFI_C "getBlockEndLine" (Ptr -> IO Int) ptr
 
--- bool getBlockOpen(block *cur);
+-- bool getBlockOpen(node_block *cur);
 cGetBlockOpen : Ptr -> IO Bool
-cGetBlockOpen ptr = mkForeign (FFun "getBlockOpen" [FPtr] FInt) ptr >>= return . (/= 0)
+cGetBlockOpen ptr = foreign FFI_C "getBlockOpen" (Ptr -> IO Int) ptr >>= return . (/= 0)
 
--- bool getBlockLastLineBlank(block *cur);
+-- bool getBlockLastLineBlank(node_block *cur);
 cGetBlockLastLineBlank : Ptr -> IO Bool
-cGetBlockLastLineBlank ptr = mkForeign (FFun "getBlockLastLineBlank" [FPtr] FInt) ptr >>= return . (/= 0)
+cGetBlockLastLineBlank ptr = foreign FFI_C "getBlockLastLineBlank" (Ptr -> IO Int) ptr >>= return . (/= 0)
 
--- struct Block *getBlockChildren(block *cur);
+-- struct Block *getBlockChildren(node_block *cur);
 cGetBlockChildren : Ptr -> IO Ptr
-cGetBlockChildren ptr = mkForeign (FFun "getBlockChildren" [FPtr] FPtr) ptr
+cGetBlockChildren ptr = foreign FFI_C "getBlockChildren" (Ptr -> IO Ptr) ptr
 
--- const char *getBlockStringContent(block *cur);
+-- const char *getBlockStringContent(node_block *cur);
 cGetBlockStringContent : Ptr -> IO String
-cGetBlockStringContent ptr = mkForeign (FFun "getBlockStringContent" [FPtr] FString) ptr
+cGetBlockStringContent ptr = foreign FFI_C "getBlockStringContent" (Ptr -> IO String) ptr
 
--- inl *getBlockInlineContent(block *cur);
+-- inl *getBlockInlineContent(node_block *cur);
 cGetBlockInlineContent : Ptr -> IO Ptr
-cGetBlockInlineContent ptr = mkForeign (FFun "getBlockInlineContent" [FPtr] FPtr) ptr
+cGetBlockInlineContent ptr = foreign FFI_C "getBlockInlineContent" (Ptr -> IO Ptr) ptr
 
--- const char *getBlockAttributes_ListData_ListType(block *cur);
+-- const char *getBlockAttributes_ListData_ListType(node_block *cur);
 cGetBlockAttributes_ListData_ListType : Ptr -> IO ListType
-cGetBlockAttributes_ListData_ListType ptr = return $ case !(mkForeign (FFun "getBlockAttributes_ListData_ListType" [FPtr] FString) ptr) of
+cGetBlockAttributes_ListData_ListType ptr = return $ case !(foreign FFI_C "getBlockAttributes_ListData_ListType" (Ptr -> IO String) ptr) of
                                                           "bullet" => Bullet
                                                           "ordered" => Ordered
 
--- int getBlockAttributes_ListData_MarkerOffset(block *cur);
+-- int getBlockAttributes_ListData_MarkerOffset(node_block *cur);
 cGetBlockAttributes_ListData_MarkerOffset : Ptr -> IO Int
-cGetBlockAttributes_ListData_MarkerOffset ptr = mkForeign (FFun "getBlockAttributes_ListData_MarkerOffset" [FPtr] FInt) ptr
+cGetBlockAttributes_ListData_MarkerOffset ptr = foreign FFI_C "getBlockAttributes_ListData_MarkerOffset" (Ptr -> IO Int) ptr
 
--- int getBlockAttributes_ListData_Padding(block *cur);
+-- int getBlockAttributes_ListData_Padding(node_block *cur);
 cGetBlockAttributes_ListData_Padding : Ptr -> IO Int
-cGetBlockAttributes_ListData_Padding ptr = mkForeign (FFun "getBlockAttributes_ListData_Padding" [FPtr] FInt) ptr
+cGetBlockAttributes_ListData_Padding ptr = foreign FFI_C "getBlockAttributes_ListData_Padding" (Ptr -> IO Int) ptr
 
--- int getBlockAttributes_ListData_Start(block *cur);
+-- int getBlockAttributes_ListData_Start(node_block *cur);
 cGetBlockAttributes_ListData_Start : Ptr -> IO Int
-cGetBlockAttributes_ListData_Start ptr = mkForeign (FFun "getBlockAttributes_ListData_Start" [FPtr] FInt) ptr
+cGetBlockAttributes_ListData_Start ptr = foreign FFI_C "getBlockAttributes_ListData_Start" (Ptr -> IO Int) ptr
 
--- const char *getBlockAttributes_ListData_Delimiter(block *cur);
+-- const char *getBlockAttributes_ListData_Delimiter(node_block *cur);
 cGetBlockAttributes_ListData_Delimiter : Ptr -> IO Delimiter
-cGetBlockAttributes_ListData_Delimiter ptr = return $ case !(mkForeign (FFun "getBlockAttributes_ListData_Delimiter" [FPtr] FString) ptr) of
+cGetBlockAttributes_ListData_Delimiter ptr = return $ case !(foreign FFI_C "getBlockAttributes_ListData_Delimiter" (Ptr -> IO String) ptr) of
                                                            "period" => Period
                                                            "parens" => Parens
 
--- char getBlockAttributes_ListData_BulletChar(block *cur);
+-- char getBlockAttributes_ListData_BulletChar(node_block *cur);
 cGetBlockAttributes_ListData_BulletChar : Ptr -> IO Char
-cGetBlockAttributes_ListData_BulletChar ptr = mkForeign (FFun "getBlockAttributes_ListData_BulletChar" [FPtr] FChar) ptr
+cGetBlockAttributes_ListData_BulletChar ptr = foreign FFI_C "getBlockAttributes_ListData_BulletChar" (Ptr -> IO Char) ptr
 
--- bool getBlockAttributes_ListData_Tight(block *cur);
+-- bool getBlockAttributes_ListData_Tight(node_block *cur);
 cGetBlockAttributes_ListData_Tight : Ptr -> IO Bool
-cGetBlockAttributes_ListData_Tight ptr = mkForeign (FFun "getBlockAttributes_ListData_Tight" [FPtr] FInt) ptr >>= return . (/= 0)
+cGetBlockAttributes_ListData_Tight ptr = foreign FFI_C "getBlockAttributes_ListData_Tight" (Ptr -> IO Int) ptr >>= return . (/= 0)
 
--- int getBlockAttributes_FencedCodeData_FenceLength(block *cur);
+-- int getBlockAttributes_FencedCodeData_FenceLength(node_block *cur);
 cGetBlockAttributes_FencedCodeData_FenceLength : Ptr -> IO Int
-cGetBlockAttributes_FencedCodeData_FenceLength ptr = mkForeign (FFun "getBlockAttributes_FencedCodeData_FenceLength" [FPtr] FInt) ptr
+cGetBlockAttributes_FencedCodeData_FenceLength ptr = foreign FFI_C "getBlockAttributes_FencedCodeData_FenceLength" (Ptr -> IO Int) ptr
 
--- int getBlockAttributes_FencedCodeData_FenceOffset(block *cur);
+-- int getBlockAttributes_FencedCodeData_FenceOffset(node_block *cur);
 cGetBlockAttributes_FencedCodeData_FenceOffset : Ptr -> IO Int
-cGetBlockAttributes_FencedCodeData_FenceOffset ptr = mkForeign (FFun "getBlockAttributes_FencedCodeData_FenceOffset" [FPtr] FInt) ptr
+cGetBlockAttributes_FencedCodeData_FenceOffset ptr = foreign FFI_C "getBlockAttributes_FencedCodeData_FenceOffset" (Ptr -> IO Int) ptr
 
--- char getBlockAttributes_FencedCodeData_FenceChar(block *cur);
+-- char getBlockAttributes_FencedCodeData_FenceChar(node_block *cur);
 cGetBlockAttributes_FencedCodeData_FenceChar : Ptr -> IO Char
-cGetBlockAttributes_FencedCodeData_FenceChar ptr = mkForeign (FFun "getBlockAttributes_FencedCodeData_FenceChar" [FPtr] FChar) ptr
+cGetBlockAttributes_FencedCodeData_FenceChar ptr = foreign FFI_C "getBlockAttributes_FencedCodeData_FenceChar" (Ptr -> IO Char) ptr
 
--- const char *getBlockAttributes_FencedCodeData_Info(block *cur);
+-- const char *getBlockAttributes_FencedCodeData_Info(node_block *cur);
 cGetBlockAttributes_FencedCodeData_Info : Ptr -> IO String
-cGetBlockAttributes_FencedCodeData_Info ptr = mkForeign (FFun "getBlockAttributes_FencedCodeData_Info" [FPtr] FString) ptr
+cGetBlockAttributes_FencedCodeData_Info ptr = foreign FFI_C "getBlockAttributes_FencedCodeData_Info" (Ptr -> IO String) ptr
 
--- int getBlockAttributes_HeaderLevel(block *cur);
+-- int getBlockAttributes_HeaderLevel(node_block *cur);
 cGetBlockAttributes_HeaderLevel : Ptr -> IO HeaderLevel
-cGetBlockAttributes_HeaderLevel ptr = mkForeign (FFun "getBlockAttributes_HeaderLevel" [FPtr] FInt) ptr >>= return . MkHeaderLevel
+cGetBlockAttributes_HeaderLevel ptr = foreign FFI_C "getBlockAttributes_HeaderLevel" (Ptr -> IO Int) ptr >>= return . MkHeaderLevel
 
--- struct Block *getBlockNext(block *cur);
+-- node_block *getBlockNext(node_block *cur);
 cGetBlockNext : Ptr -> IO Ptr
-cGetBlockNext ptr = mkForeign (FFun "getBlockNext" [FPtr] FPtr) ptr
+cGetBlockNext ptr = foreign FFI_C "getBlockNext" (Ptr -> IO Ptr) ptr
 
 
 
@@ -284,7 +280,7 @@ readMarkdown opts s = unsafePerformIO $
                       do
                       cur <- cReadMarkdown s
                       block <- cGetBlock cur
-                      cFreeBlocks cur
+                      cFreeNodes cur
                       return $ MkMarkdown (MkMeta s)
                                           [block]
 
@@ -292,10 +288,7 @@ readMarkdown' : String -> Markdown
 readMarkdown' = readMarkdown def
 
 writeMarkdown : WriterOptions -> Markdown -> String
-writeMarkdown opts m = unsafePerformIO $
-                       do
-                       let s = source (meta m)
-                       return s
+writeMarkdown _ = source . meta
 
 writeMarkdown' : Markdown -> String
 writeMarkdown' = writeMarkdown def
@@ -306,7 +299,7 @@ writeHtml opts m = unsafePerformIO $
                    let s = source (meta m)
                    cur <- cReadMarkdown s
                    html <- cWriteHtml cur
-                   cFreeBlocks cur
+                   cFreeNodes cur
                    return html
 
 writeHtml' : Markdown -> String
@@ -328,8 +321,8 @@ printAST : WriterOptions -> Markdown -> IO ()
 printAST opts m = do
                   let s = source (meta m)
                   cur <- cReadMarkdown s
-                  cPrintBlocks cur 0
-                  cFreeBlocks cur
+                  cPrintBlocks cur
+                  cFreeNodes cur
 
 printAST' : Markdown -> IO ()
 printAST' = printAST def
