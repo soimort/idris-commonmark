@@ -9,7 +9,7 @@ install:
 
 clean:
 	$(IDRIS) --clean ${PKG}.ipkg
-	make -C src -f stmd.mk clean
+	make -C src -f cmark.mk clean
 
 rebuild: clean build
 
