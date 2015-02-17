@@ -1,6 +1,6 @@
 # Idris-CommonMark
 
-This is a direct [Idris](http://www.idris-lang.org/) wrapper of jgm's [stmd](https://github.com/jgm/stmd) library, a C implementation of [CommonMark](http://commonmark.org/).
+This is a direct [Idris](http://www.idris-lang.org/) wrapper of jgm's [cmark](https://github.com/jgm/cmark) library, a C implementation of [CommonMark](http://commonmark.org/).
 
 **WARNING**: This baby never works the way you want it to. Basically you'll be eaten up by all the `segmentation fault` things.
 
