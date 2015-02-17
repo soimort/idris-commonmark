@@ -2,6 +2,8 @@
 module Main
 
 import Text.Markdown
+import Text.Markdown.Definition
+import Text.Markdown.Options
 
 main : IO ()
 main = printHtml def
